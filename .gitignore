@@ -9,3 +9,4 @@
 
 # never commit device backups; they hold factory keys and credentials
 stock-*.bin
+/dist/
