@@ -1,0 +1,26 @@
+# Shelly 1 Mini Gen4 on Zigbee. Pins from automatous-io/shelly-gen4-esphome. No power meter.
+
+substitutions:
+  device_name: "shelly-1-mini-gen4-zb"
+  friendly_name: "Shelly 1 Mini Gen4 ZB"
+  zigbee_model: "Shelly 1 Mini Gen4 (ESPHome)"
+  pin_relay: GPIO10
+  pin_switch: GPIO12
+  pin_button: GPIO22
+  pin_led: GPIO5
+  pin_ntc: GPIO4
+
+packages:
+  base: !include common/zigbee-base.yaml
+  relay: !include common/relay.yaml
+  temp: !include common/temp-ntc.yaml
+  protect_temp: !include common/protect-temp.yaml
+
+# stock firmware leaves pad hold on the relay and LED pins
+esphome:
+  on_boot:
+    priority: 1000
+    then:
+      - lambda: |-
+          gpio_hold_dis(GPIO_NUM_10);
+          gpio_hold_dis(GPIO_NUM_5);

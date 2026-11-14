@@ -1,0 +1,13 @@
+# Overvoltage, overcurrent and overpower protection: two readings in a row over a limit
+# turn the relay off.
+
+interval:
+  - interval: ${power_update_interval}
+    then:
+      - lambda: |-
+          static uint8_t over = 0;
+          bool high = id(sensor_voltage).state > ${max_voltage}
+                   || id(sensor_current).state > ${max_current}
+                   || id(sensor_power).state > ${max_power};
+          over = id(relay_1).state && high ? over + 1 : 0;
+          if (over >= 2) { over = 0; id(relay_1).turn_off(); id(fault_1).publish_state(true); }

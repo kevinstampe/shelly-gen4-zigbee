@@ -1,0 +1,27 @@
+# Shelly EM Mini Gen4 on Zigbee: BL0942 on the CT clamp, no relay.
+# Pins and calibration from automatous-io/shelly-gen4-esphome. The RTC is not used.
+
+substitutions:
+  device_name: "shelly-em-mini-gen4-zb"
+  friendly_name: "Shelly EM Mini Gen4 ZB"
+  zigbee_model: "Shelly EM Mini Gen4 (ESPHome)"
+  pin_button: GPIO22
+  pin_led: GPIO5
+  pin_bl0942_tx: GPIO20
+  pin_bl0942_rx: GPIO19
+  pin_ntc: GPIO4
+  voltage_reference: "14491.65075"
+  current_reference: "251625.18057"
+
+packages:
+  base: !include common/zigbee-base.yaml
+  button: !include common/button-reset.yaml
+  meter: !include common/meter-bl0942.yaml
+  temp: !include common/temp-ntc.yaml
+
+# stock firmware leaves pad hold on the LED pin
+esphome:
+  on_boot:
+    priority: 1000
+    then:
+      - lambda: 'gpio_hold_dis(GPIO_NUM_5);'

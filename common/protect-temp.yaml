@@ -1,0 +1,9 @@
+# Overheating protection: two readings in a row over the limit turn the relay off.
+
+interval:
+  - interval: 10s
+    then:
+      - lambda: |-
+          static uint8_t over = 0;
+          over = id(relay_1).state && id(sensor_temperature).get_raw_state() > ${max_temperature} ? over + 1 : 0;
+          if (over >= 2) { over = 0; id(relay_1).turn_off(); id(fault_1).publish_state(true); }

@@ -1,0 +1,37 @@
+# Shared core for Shelly Gen4 (ESP32-C6) on Zigbee: router, no Wi-Fi, UART updates only.
+
+# defaults; model files override any of these
+substitutions:
+  relay_restore: "RESTORE_DEFAULT_OFF"
+  input_debounce: "50ms"
+  factory_reset_hold: "5s"
+  line_frequency: "50Hz"
+  power_update_interval: "10s"
+  ntc_b_constant: "3350"
+  max_voltage: "280"
+  max_temperature: "95"
+
+esphome:
+  name: ${device_name}
+  friendly_name: ${friendly_name}
+
+esp32:
+  board: esp32-c6-devkitm-1
+  flash_size: 8MB
+  framework:
+    type: esp-idf
+
+logger:
+  level: INFO
+  hardware_uart: UART0
+
+zigbee:
+  id: zb
+  router: true
+  power_source: MAINS_SINGLE_PHASE
+  model: ${zigbee_model}
+
+status_led:
+  pin:
+    number: ${pin_led}
+    inverted: true

@@ -1,0 +1,17 @@
+# Shelly 1 Gen4 on Zigbee. Pins from automatous-io/shelly-gen4-esphome.
+# No power meter and no board NTC; overheating uses the ESP32-C6 die temperature.
+
+substitutions:
+  device_name: "shelly-1-gen4-zb"
+  friendly_name: "Shelly 1 Gen4 ZB"
+  zigbee_model: "Shelly 1 Gen4 (ESPHome)"
+  pin_relay: GPIO5
+  pin_switch: GPIO10
+  pin_button: GPIO4
+  pin_led: GPIO15
+
+packages:
+  base: !include common/zigbee-base.yaml
+  relay: !include common/relay.yaml
+  temp: !include common/temp-internal.yaml
+  protect_temp: !include common/protect-temp.yaml

@@ -1,0 +1,14 @@
+shelly-gen4-zigbee
+Copyright 2026 Kevin Guldager Stampe
+
+This project is derived from shelly-gen4-esphome by AUTOMATOUS.IO
+(https://github.com/automatous-io/shelly-gen4-esphome), licensed under the
+Apache License, Version 2.0. Taken from it:
+
+- the GPIO pin maps for every supported model
+- the power meter calibration values
+- the stock Shelly flash layout used for web UI installs
+- tools/make-esphome-ota-zip.py (unmodified, Copyright 2026 AUTOMATOUS.IO)
+
+Firmware images built from this repository contain ESPHome, whose C++ runtime
+is licensed under the GNU GPLv3; the images themselves are therefore GPLv3.

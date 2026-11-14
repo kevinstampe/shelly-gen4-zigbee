@@ -1,0 +1,51 @@
+# Relay, switch input and onboard button for single-relay models.
+# Button: short press toggles the relay, long hold leaves the Zigbee network and resets.
+
+switch:
+  - platform: gpio
+    name: "Relay"
+    id: relay_1
+    pin: ${pin_relay}
+    restore_mode: ${relay_restore}
+    cluster: on_off
+    device_class: outlet
+    endpoint: 1
+    use_device_type: true
+    report: force
+    # turning the relay back on clears a protection trip
+    on_turn_on:
+      - lambda: 'id(fault_1).publish_state(false);'
+
+binary_sensor:
+  - platform: gpio
+    name: "Switch Input"
+    id: switch_input
+    report: force
+    pin: ${pin_switch}
+    filters:
+      - delayed_on_off: ${input_debounce}
+    on_press:
+      - switch.toggle: relay_1
+
+  - platform: gpio
+    id: onboard_button
+    pin:
+      number: ${pin_button}
+      inverted: true
+      mode: INPUT_PULLUP
+    on_multi_click:
+      - timing:
+          - ON for at most 1s
+          - OFF for at least 0.2s
+        then:
+          - switch.toggle: relay_1
+      - timing:
+          - ON for at least ${factory_reset_hold}
+        then:
+          - zigbee.factory_reset
+
+  # protection trip (overpower, overcurrent, overvoltage or overheating)
+  - platform: template
+    name: "Fault"
+    id: fault_1
+    report: force

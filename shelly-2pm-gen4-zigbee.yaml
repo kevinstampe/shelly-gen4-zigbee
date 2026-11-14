@@ -1,0 +1,268 @@
+# Shelly 2PM Gen4 — ESPHome over Zigbee (router), no Wi-Fi.
+# Pin map and ADE7953 calibration from automatous-io/shelly-gen4-esphome (Apache 2.0).
+# Flash over UART only: there is no OTA without Wi-Fi.
+
+substitutions:
+  device_name: "shelly-2pm-gen4-zb"
+  friendly_name: "Shelly 2PM Gen4 ZB"
+  zigbee_model: "Shelly 2PM Gen4 (ESPHome)"
+  pin_led: GPIO18
+  relay_restore: "RESTORE_DEFAULT_OFF"
+  input_debounce: "50ms"
+  factory_reset_hold: "5s"
+  power_update_interval: "10s"
+  ntc_b_constant: "3350"
+  current_pga_gain: "1x"
+  voltage_multiplier: "0.9811"
+  current_1_multiplier: "3.747"
+  current_2_multiplier: "3.808"
+  power_1_multiplier: "-3.679"
+  power_2_multiplier: "-3.718"
+  max_power: "2400"
+  max_current: "10"
+  max_voltage: "280"
+  max_temperature: "95"
+
+packages:
+  base: !include common/zigbee-base.yaml
+
+switch:
+  - platform: gpio
+    name: "Relay 1"
+    id: relay_1
+    pin: GPIO5
+    restore_mode: ${relay_restore}
+    cluster: on_off
+    device_class: outlet
+    endpoint: 1
+    use_device_type: true
+    report: force
+    on_turn_on:
+      - lambda: |-
+          bool high = id(sensor_voltage).state > ${max_voltage};
+          bool hot = id(sensor_temperature).get_raw_state() > ${max_temperature};
+          id(fault_1).publish_state(high || hot);
+          if (high || hot) id(relay_1).turn_off();
+
+  - platform: gpio
+    name: "Relay 2"
+    id: relay_2
+    pin: GPIO3
+    restore_mode: ${relay_restore}
+    cluster: on_off
+    device_class: outlet
+    endpoint: 2
+    use_device_type: true
+    report: force
+    on_turn_on:
+      - lambda: |-
+          bool high = id(sensor_voltage).state > ${max_voltage};
+          bool hot = id(sensor_temperature).get_raw_state() > ${max_temperature};
+          id(fault_2).publish_state(high || hot);
+          if (high || hot) id(relay_2).turn_off();
+
+binary_sensor:
+  - platform: gpio
+    name: "Switch Input 1"
+    report: force
+    id: switch_input_1
+    pin: GPIO11
+    filters:
+      - delayed_on_off: ${input_debounce}
+    on_press:
+      - switch.toggle: relay_1
+
+  - platform: gpio
+    name: "Switch Input 2"
+    report: force
+    id: switch_input_2
+    pin: GPIO10
+    filters:
+      - delayed_on_off: ${input_debounce}
+    on_press:
+      - switch.toggle: relay_2
+
+  # short press toggles relay 1; hold leaves the Zigbee network and resets
+  - platform: gpio
+    id: onboard_button
+    pin:
+      number: GPIO12
+      inverted: true
+      mode: INPUT_PULLUP
+    on_multi_click:
+      - timing:
+          - ON for at most 1s
+          - OFF for at least 0.2s
+        then:
+          - switch.toggle: relay_1
+      - timing:
+          - ON for at least ${factory_reset_hold}
+        then:
+          - zigbee.factory_reset
+
+  # protection trip per channel (overpower, overcurrent, overvoltage or overheating);
+  # clears when the relay is turned back on
+  - platform: template
+    name: "Fault 1"
+    report: force
+    id: fault_1
+  - platform: template
+    name: "Fault 2"
+    report: force
+    id: fault_2
+
+i2c:
+  id: i2c_ade7953
+  sda: GPIO6
+  scl: GPIO7
+  frequency: 200kHz
+
+sensor:
+  - platform: ade7953_i2c
+    id: ade7953_meter
+    i2c_id: i2c_ade7953
+    irq_pin: GPIO1
+    update_interval: ${power_update_interval}
+    current_pga_gain_a: ${current_pga_gain}
+    current_pga_gain_b: ${current_pga_gain}
+    voltage:
+      name: "Voltage"
+      report: force
+      id: sensor_voltage
+      filters:
+        - multiply: ${voltage_multiplier}
+      on_value:
+        - lambda: |-
+            static uint8_t over = 0;
+            over = (id(relay_1).state || id(relay_2).state) && x > ${max_voltage} ? over + 1 : 0;
+            if (over >= 2) {
+              over = 0;
+              if (id(relay_1).state) { id(relay_1).turn_off(); id(fault_1).publish_state(true); }
+              if (id(relay_2).state) { id(relay_2).turn_off(); id(fault_2).publish_state(true); }
+            }
+    frequency:
+      id: sensor_frequency
+    current_a:
+      name: "Current 1"
+      report: force
+      id: sensor_current_1
+      accuracy_decimals: 3
+      filters:
+        - multiply: ${current_1_multiplier}
+      on_value:
+        - lambda: |-
+            static uint8_t over = 0;
+            over = id(relay_1).state && x > ${max_current} ? over + 1 : 0;
+            if (over >= 2) { over = 0; id(relay_1).turn_off(); id(fault_1).publish_state(true); }
+    current_b:
+      name: "Current 2"
+      report: force
+      id: sensor_current_2
+      accuracy_decimals: 3
+      filters:
+        - multiply: ${current_2_multiplier}
+      on_value:
+        - lambda: |-
+            static uint8_t over = 0;
+            over = id(relay_2).state && x > ${max_current} ? over + 1 : 0;
+            if (over >= 2) { over = 0; id(relay_2).turn_off(); id(fault_2).publish_state(true); }
+    active_power_a:
+      name: "Power 1"
+      report: force
+      id: sensor_power_1
+      filters:
+        - multiply: ${power_1_multiplier}
+      on_value:
+        - lambda: |-
+            static uint8_t over = 0;
+            over = id(relay_1).state && x > ${max_power} ? over + 1 : 0;
+            if (over >= 2) { over = 0; id(relay_1).turn_off(); id(fault_1).publish_state(true); }
+    active_power_b:
+      name: "Power 2"
+      report: force
+      id: sensor_power_2
+      filters:
+        - multiply: ${power_2_multiplier}
+      on_value:
+        - lambda: |-
+            static uint8_t over = 0;
+            over = id(relay_2).state && x > ${max_power} ? over + 1 : 0;
+            if (over >= 2) { over = 0; id(relay_2).turn_off(); id(fault_2).publish_state(true); }
+
+  - platform: copy
+    source_id: sensor_power_1
+    id: power_1_positive
+    filters:
+      - clamp:
+          min_value: 0
+
+  - platform: copy
+    source_id: sensor_power_2
+    id: power_2_positive
+    filters:
+      - clamp:
+          min_value: 0
+
+  - platform: integration
+    name: "Energy 1"
+    report: force
+    id: sensor_energy_1
+    sensor: power_1_positive
+    time_unit: h
+    restore: true
+    unit_of_measurement: kWh
+    device_class: energy
+    state_class: total_increasing
+    accuracy_decimals: 3
+    filters:
+      - multiply: 0.001
+
+  - platform: integration
+    name: "Energy 2"
+    report: force
+    id: sensor_energy_2
+    sensor: power_2_positive
+    time_unit: h
+    restore: true
+    unit_of_measurement: kWh
+    device_class: energy
+    state_class: total_increasing
+    accuracy_decimals: 3
+    filters:
+      - multiply: 0.001
+
+  - platform: ntc
+    name: "Temperature"
+    report: force
+    id: sensor_temperature
+    sensor: temp_resistance
+    unit_of_measurement: "°C"
+    device_class: temperature
+    accuracy_decimals: 1
+    calibration:
+      b_constant: ${ntc_b_constant}
+      reference_resistance: 10kOhm
+      reference_temperature: 25°C
+    filters:
+      - throttle: 60s
+    on_raw_value:
+      - lambda: |-
+          static uint8_t over = 0;
+          over = (id(relay_1).state || id(relay_2).state) && x > ${max_temperature} ? over + 1 : 0;
+          if (over >= 2) {
+            over = 0;
+            if (id(relay_1).state) { id(relay_1).turn_off(); id(fault_1).publish_state(true); }
+            if (id(relay_2).state) { id(relay_2).turn_off(); id(fault_2).publish_state(true); }
+          }
+
+  - platform: resistance
+    id: temp_resistance
+    sensor: temp_voltage
+    configuration: DOWNSTREAM
+    resistor: 10kOhm
+
+  - platform: adc
+    id: temp_voltage
+    update_interval: 10s
+    pin: GPIO4
+    attenuation: 12db

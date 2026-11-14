@@ -1,0 +1,11 @@
+# ESPHome build cache and generated wrappers
+/.esphome/
+/.webui-*.yaml
+/secrets.yaml
+
+# build output: published as release assets, not committed
+*.bin
+/webui/
+
+# never commit device backups; they hold factory keys and credentials
+stock-*.bin

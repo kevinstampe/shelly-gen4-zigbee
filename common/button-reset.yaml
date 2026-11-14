@@ -1,0 +1,14 @@
+# Onboard button for models without a relay: long hold leaves the Zigbee network and resets.
+
+binary_sensor:
+  - platform: gpio
+    id: onboard_button
+    pin:
+      number: ${pin_button}
+      inverted: true
+      mode: INPUT_PULLUP
+    on_multi_click:
+      - timing:
+          - ON for at least ${factory_reset_hold}
+        then:
+          - zigbee.factory_reset

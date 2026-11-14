@@ -1,0 +1,42 @@
+# BL0942 power meter on UART1 (the logger owns UART0). 9600 baud, not the chip's 4800 default.
+
+uart:
+  id: uart_bl0942
+  tx_pin: ${pin_bl0942_tx}
+  rx_pin:
+    number: ${pin_bl0942_rx}
+    mode:
+      input: true
+      pullup: true
+  baud_rate: 9600
+  stop_bits: 1
+
+sensor:
+  - platform: bl0942
+    uart_id: uart_bl0942
+    line_frequency: ${line_frequency}
+    update_interval: ${power_update_interval}
+    voltage_reference: ${voltage_reference}
+    current_reference: ${current_reference}
+    voltage:
+      name: "Voltage"
+      id: sensor_voltage
+      report: force
+    current:
+      name: "Current"
+      id: sensor_current
+      accuracy_decimals: 3
+      report: force
+    power:
+      name: "Power"
+      id: sensor_power
+      report: force
+    frequency:
+      id: sensor_frequency
+    energy:
+      name: "Energy"
+      id: sensor_energy
+      device_class: energy
+      state_class: total_increasing
+      accuracy_decimals: 3
+      report: force

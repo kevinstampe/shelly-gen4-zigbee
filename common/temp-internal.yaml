@@ -1,0 +1,11 @@
+# ESP32-C6 die temperature, for boards without an NTC.
+
+sensor:
+  - platform: internal_temperature
+    name: "Temperature"
+    id: sensor_temperature
+    device_class: temperature
+    update_interval: 10s
+    report: force
+    filters:
+      - throttle: 60s

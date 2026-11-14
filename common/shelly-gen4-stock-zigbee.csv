@@ -1,0 +1,10 @@
+# Stock Shelly Gen4 layout (partition table at 0x10000) for web UI installs, plus the
+# zb_fct placeholder ESPHome's Zigbee component requires. Zigbee data lives in nvs.
+# zb_fct sits in the gap before stock zb_storage; nothing reads or writes it.
+# Name,   Type, SubType, Offset,   Size
+otadata,  data, ota,     0x11000,  0x2000,
+nvs,      data, nvs,     0x14000,  0xc000,
+app_0,    app,  ota_0,   0x20000,  0x300000,
+fs_0,     data, spiffs,  0x320000, 0xe0000,
+app_1,    app,  ota_1,   0x400000, 0x300000,
+zb_fct,   data, fat,     0x7e0000, 0x1000,

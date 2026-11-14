@@ -1,0 +1,29 @@
+# Onboard NTC on a 10k divider. Beta value is an estimate, not measured.
+
+sensor:
+  - platform: ntc
+    name: "Temperature"
+    id: sensor_temperature
+    sensor: temp_resistance
+    unit_of_measurement: "°C"
+    device_class: temperature
+    accuracy_decimals: 1
+    report: force
+    calibration:
+      b_constant: ${ntc_b_constant}
+      reference_resistance: 10kOhm
+      reference_temperature: 25°C
+    filters:
+      - throttle: 60s
+
+  - platform: resistance
+    id: temp_resistance
+    sensor: temp_voltage
+    configuration: DOWNSTREAM
+    resistor: 10kOhm
+
+  - platform: adc
+    id: temp_voltage
+    update_interval: 10s
+    pin: ${pin_ntc}
+    attenuation: 12db

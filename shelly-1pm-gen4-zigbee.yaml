@@ -1,0 +1,25 @@
+# Shelly 1PM Gen4 on Zigbee. Pins and calibration from automatous-io/shelly-gen4-esphome.
+
+substitutions:
+  device_name: "shelly-1pm-gen4-zb"
+  friendly_name: "Shelly 1PM Gen4 ZB"
+  zigbee_model: "Shelly 1PM Gen4 (ESPHome)"
+  pin_relay: GPIO4
+  pin_switch: GPIO10
+  pin_button: GPIO1
+  pin_led: GPIO11
+  pin_bl0942_tx: GPIO6
+  pin_bl0942_rx: GPIO7
+  pin_ntc: GPIO3
+  voltage_reference: "14462.09548"
+  current_reference: "253772.51527"
+  max_power: "3680"
+  max_current: "16"
+
+packages:
+  base: !include common/zigbee-base.yaml
+  relay: !include common/relay.yaml
+  meter: !include common/meter-bl0942.yaml
+  temp: !include common/temp-ntc.yaml
+  protect_temp: !include common/protect-temp.yaml
+  protect_meter: !include common/protect-meter.yaml
