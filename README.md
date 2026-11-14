@@ -19,13 +19,13 @@ ESPHome's [Zigbee component](https://esphome.io/components/zigbee/).
 | Shelly 1 Gen4 | [`shelly-1-gen4-zigbee.yaml`](shelly-1-gen4-zigbee.yaml) | relay, switch input, temperature (chip), fault | builds, untested |
 | Shelly 1 Mini Gen4 | [`shelly-1-mini-gen4-zigbee.yaml`](shelly-1-mini-gen4-zigbee.yaml) | relay, switch input, temperature, fault | builds, untested |
 | Shelly 1PM Gen4 | [`shelly-1pm-gen4-zigbee.yaml`](shelly-1pm-gen4-zigbee.yaml) | relay, switch input, voltage, current, power, energy, temperature, fault | tested (UART) |
-| Shelly 1PM Mini Gen4 | [`shelly-1pm-mini-gen4-zigbee.yaml`](shelly-1pm-mini-gen4-zigbee.yaml) | as 1PM | builds, untested |
+| Shelly 1PM Mini Gen4 | [`shelly-1pm-mini-gen4-zigbee.yaml`](shelly-1pm-mini-gen4-zigbee.yaml) | as 1PM | tested (web UI) |
 | Shelly 2PM Gen4 | [`shelly-2pm-gen4-zigbee.yaml`](shelly-2pm-gen4-zigbee.yaml) | 2 relays, 2 switch inputs, per-channel current, power, energy, voltage, temperature, 2 faults | tested (UART) |
 | Shelly EM Mini Gen4 | [`shelly-em-mini-gen4-zigbee.yaml`](shelly-em-mini-gen4-zigbee.yaml) | voltage, current, power, energy (CT clamp), temperature | builds, untested |
 
 "Tested" means flashed over UART, paired with Zigbee2MQTT, and switched on the bench, using an
-earlier revision of these configs; the current block-based layout has not yet been flashed. The
-web UI zips are untested on every model. Reports for the untested models are welcome.
+earlier revision of these configs. The 1PM Mini Gen4 was installed through the stock web UI from
+the zip and paired. The other web UI zips are untested. Reports for the untested models are welcome.
 
 ## Behavior
 
