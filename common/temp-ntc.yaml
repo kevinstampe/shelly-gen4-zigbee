@@ -14,7 +14,9 @@ sensor:
       reference_resistance: 10kOhm
       reference_temperature: 25°C
     filters:
-      - throttle: 60s
+      - or:
+          - throttle: ${report_heartbeat}
+          - delta: ${report_delta_temperature}
 
   - platform: resistance
     id: temp_resistance

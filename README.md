@@ -31,7 +31,13 @@ the zip and paired. The other web UI zips are untested. Reports for the untested
 
 - **Relays** use the Zigbee on/off cluster with the outlet device type, one endpoint per relay
   (endpoint 1, and endpoint 2 on the 2PM), so they can be added to Zigbee groups.
-- **Sensors and inputs** are generic analog/binary input clusters, sent on every change.
+- **Sensors and inputs** are generic analog/binary input clusters. Inputs are sent on every change.
+  Meter readings and temperature are sent when they change meaningfully, and at least every
+  5 minutes (`report_heartbeat` and the `report_delta_*` substitutions); the protections still act
+  on every raw reading.
+- **Zigbee watchdog**: once joined, the device asks the coordinator for its node descriptor every
+  minute. With no answer for 15 minutes (`zigbee_watchdog_timeout`), it reboots and the relays
+  restore their state.
 - **Switch inputs** toggle their relay. **The onboard button** toggles relay 1 on a short press;
   a 5 s hold leaves the Zigbee network and starts pairing again (the only action on the EM Mini).
 - **Protections**: two readings in a row over a limit (power, current, voltage or temperature)

@@ -126,8 +126,6 @@ sensor:
     current_pga_gain_a: ${current_pga_gain}
     current_pga_gain_b: ${current_pga_gain}
     voltage:
-      name: "Voltage"
-      report: force
       id: sensor_voltage
       filters:
         - multiply: ${voltage_multiplier}
@@ -143,8 +141,6 @@ sensor:
     frequency:
       id: sensor_frequency
     current_a:
-      name: "Current 1"
-      report: force
       id: sensor_current_1
       accuracy_decimals: 3
       filters:
@@ -155,8 +151,6 @@ sensor:
             over = id(relay_1).state && x > ${max_current} ? over + 1 : 0;
             if (over >= 2) { over = 0; id(relay_1).turn_off(); id(fault_1).publish_state(true); }
     current_b:
-      name: "Current 2"
-      report: force
       id: sensor_current_2
       accuracy_decimals: 3
       filters:
@@ -167,8 +161,6 @@ sensor:
             over = id(relay_2).state && x > ${max_current} ? over + 1 : 0;
             if (over >= 2) { over = 0; id(relay_2).turn_off(); id(fault_2).publish_state(true); }
     active_power_a:
-      name: "Power 1"
-      report: force
       id: sensor_power_1
       filters:
         - multiply: ${power_1_multiplier}
@@ -178,8 +170,6 @@ sensor:
             over = id(relay_1).state && x > ${max_power} ? over + 1 : 0;
             if (over >= 2) { over = 0; id(relay_1).turn_off(); id(fault_1).publish_state(true); }
     active_power_b:
-      name: "Power 2"
-      report: force
       id: sensor_power_2
       filters:
         - multiply: ${power_2_multiplier}
@@ -188,6 +178,68 @@ sensor:
             static uint8_t over = 0;
             over = id(relay_2).state && x > ${max_power} ? over + 1 : 0;
             if (over >= 2) { over = 0; id(relay_2).turn_off(); id(fault_2).publish_state(true); }
+
+  # Zigbee reports: copies of the meter readings, sent on a meaningful change or every
+  # report_heartbeat. The protections above still see every raw reading.
+  - platform: copy
+    source_id: sensor_voltage
+    name: "Voltage"
+    report: force
+    unit_of_measurement: V
+    device_class: voltage
+    accuracy_decimals: 1
+    filters:
+      - or:
+          - throttle: ${report_heartbeat}
+          - delta: ${report_delta_voltage}
+
+  - platform: copy
+    source_id: sensor_current_1
+    name: "Current 1"
+    report: force
+    unit_of_measurement: A
+    device_class: current
+    accuracy_decimals: 3
+    filters:
+      - or:
+          - throttle: ${report_heartbeat}
+          - delta: ${report_delta_current}
+
+  - platform: copy
+    source_id: sensor_current_2
+    name: "Current 2"
+    report: force
+    unit_of_measurement: A
+    device_class: current
+    accuracy_decimals: 3
+    filters:
+      - or:
+          - throttle: ${report_heartbeat}
+          - delta: ${report_delta_current}
+
+  - platform: copy
+    source_id: sensor_power_1
+    name: "Power 1"
+    report: force
+    unit_of_measurement: W
+    device_class: power
+    accuracy_decimals: 1
+    filters:
+      - or:
+          - throttle: ${report_heartbeat}
+          - delta: ${report_delta_power}
+
+  - platform: copy
+    source_id: sensor_power_2
+    name: "Power 2"
+    report: force
+    unit_of_measurement: W
+    device_class: power
+    accuracy_decimals: 1
+    filters:
+      - or:
+          - throttle: ${report_heartbeat}
+          - delta: ${report_delta_power}
 
   - platform: copy
     source_id: sensor_power_1
@@ -216,6 +268,9 @@ sensor:
     accuracy_decimals: 3
     filters:
       - multiply: 0.001
+      - or:
+          - throttle: ${report_heartbeat}
+          - delta: ${report_delta_energy}
 
   - platform: integration
     name: "Energy 2"
@@ -230,6 +285,9 @@ sensor:
     accuracy_decimals: 3
     filters:
       - multiply: 0.001
+      - or:
+          - throttle: ${report_heartbeat}
+          - delta: ${report_delta_energy}
 
   - platform: ntc
     name: "Temperature"
@@ -244,7 +302,9 @@ sensor:
       reference_resistance: 10kOhm
       reference_temperature: 25°C
     filters:
-      - throttle: 60s
+      - or:
+          - throttle: ${report_heartbeat}
+          - delta: ${report_delta_temperature}
     on_raw_value:
       - lambda: |-
           static uint8_t over = 0;

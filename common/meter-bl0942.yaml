@@ -19,24 +19,67 @@ sensor:
     voltage_reference: ${voltage_reference}
     current_reference: ${current_reference}
     voltage:
-      name: "Voltage"
       id: sensor_voltage
-      report: force
     current:
-      name: "Current"
       id: sensor_current
       accuracy_decimals: 3
-      report: force
     power:
-      name: "Power"
       id: sensor_power
-      report: force
     frequency:
       id: sensor_frequency
     energy:
-      name: "Energy"
       id: sensor_energy
       device_class: energy
       state_class: total_increasing
       accuracy_decimals: 3
-      report: force
+
+  # Zigbee reports: copies of the meter readings, sent on a meaningful change or every
+  # report_heartbeat. The protections still see every raw reading.
+  - platform: copy
+    source_id: sensor_voltage
+    name: "Voltage"
+    report: force
+    unit_of_measurement: V
+    device_class: voltage
+    accuracy_decimals: 1
+    filters:
+      - or:
+          - throttle: ${report_heartbeat}
+          - delta: ${report_delta_voltage}
+
+  - platform: copy
+    source_id: sensor_current
+    name: "Current"
+    report: force
+    unit_of_measurement: A
+    device_class: current
+    accuracy_decimals: 3
+    filters:
+      - or:
+          - throttle: ${report_heartbeat}
+          - delta: ${report_delta_current}
+
+  - platform: copy
+    source_id: sensor_power
+    name: "Power"
+    report: force
+    unit_of_measurement: W
+    device_class: power
+    accuracy_decimals: 1
+    filters:
+      - or:
+          - throttle: ${report_heartbeat}
+          - delta: ${report_delta_power}
+
+  - platform: copy
+    source_id: sensor_energy
+    name: "Energy"
+    report: force
+    unit_of_measurement: kWh
+    device_class: energy
+    state_class: total_increasing
+    accuracy_decimals: 3
+    filters:
+      - or:
+          - throttle: ${report_heartbeat}
+          - delta: ${report_delta_energy}

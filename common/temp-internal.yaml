@@ -8,4 +8,6 @@ sensor:
     update_interval: 10s
     report: force
     filters:
-      - throttle: 60s
+      - or:
+          - throttle: ${report_heartbeat}
+          - delta: ${report_delta_temperature}
